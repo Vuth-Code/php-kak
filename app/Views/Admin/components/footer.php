@@ -12,7 +12,7 @@
             </ul>
         </nav>
         <div class="copyright">
-            &copy; <?= date('Y') ?> OneStore Admin. Made with <i class="fa fa-heart heart text-danger"></i> for better e-commerce management.
+            &copy; <?= date('Y') ?> KH-Store Admin. Made with <i class="fa fa-heart heart text-danger"></i> for better e-commerce management.
         </div>
     </div>
 </footer> 

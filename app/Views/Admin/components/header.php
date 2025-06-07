@@ -6,6 +6,7 @@
         <div class="logo-header" data-background-color="dark">
             <a href="<?= Helper::adminUrl('') ?>" class="logo">
                 <img src="https://cdn.jsdelivr.net/gh/BroPinn/cdn-file@main/admin/img/kaiadmin/logo_light.svg" 
+                
                      alt="navbar brand" class="navbar-brand" height="20" />
             </a>
             <div class="nav-toggle">

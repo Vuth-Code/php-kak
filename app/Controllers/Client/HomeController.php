@@ -31,8 +31,8 @@ class HomeController extends ClientController {
      * Display home page
      */
     public function home() {
-        $this->setTitle('Welcome to OneStore');
-        $this->setMeta('OneStore - Your favorite online shopping destination');
+        $this->setTitle('Welcome to KH-Store');
+        $this->setMeta('KH-Store - Your favorite online shopping destination');
         
         try {
             $pdo = $this->connectDatabase();

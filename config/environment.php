@@ -77,7 +77,7 @@ if ($environment === 'production') {
 }
 
 // Common settings (same for all environments)
-define('APP_NAME', 'OneStore');
+define('APP_NAME', 'KH-Store');
 define('APP_VERSION', '2.0.0');
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'onestore_db');

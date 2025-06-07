@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? 'Admin Login - OneStore' ?></title>
+    <title><?= $title ?? 'Admin Login - KH-Store' ?></title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -127,7 +127,7 @@
             <div class="col-md-6 col-lg-5">
                 <div class="login-container">
                     <div class="login-header">
-                        <h2><i class="fas fa-shield-alt me-2"></i>OneStore</h2>
+                        <h2><i class="fas fa-shield-alt me-2"></i>KH-Store</h2>
                         <p>Admin Dashboard</p>
                     </div>
                     
