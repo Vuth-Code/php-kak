@@ -14,10 +14,10 @@ function detectEnvironment() {
     $httpHost = $_SERVER['HTTP_HOST'] ?? '';
     
     // EC2 production indicators
-    if ($serverIP === '54.179.0.116' || 
-        $serverName === '54.179.0.116' || 
-        $httpHost === '54.179.0.116' ||
-        strpos($httpHost, '54.179.0.116') !== false) {
+    if ($serverIP === '18.142.35.78' || 
+        $serverName === '18.142.35.78' || 
+        $httpHost === '18.142.35.78' ||
+        strpos($httpHost, '18.142.35.78') !== false) {
         return 'production';
     }
     
@@ -40,7 +40,7 @@ if ($environment === 'production') {
     define('APP_ENV', 'production');
     define('APP_DEBUG', false);
     define('BASE_PATH', '/onestore');
-    define('APP_URL', 'http://54.179.0.116/onestore');
+    define('APP_URL', 'http://18.142.35.78/onestore');
     
     // Production database
     define('DB_USER', 'onestore_user');
