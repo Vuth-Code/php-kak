@@ -28,5 +28,4 @@ Thumbs.db
 *.bak
 
 # Dependencies
-vendor/
 node_modules/
