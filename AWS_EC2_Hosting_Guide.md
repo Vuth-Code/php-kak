@@ -23,6 +23,7 @@
 ## 1. Prerequisites Check
 
 ### ✅ What You Should Already Have:
+
 - **EC2 Instance**: Running Ubuntu 22.04 LTS
 - **Elastic IP**: 54.179.0.116 (assigned to your instance)
 - **Existing Applications**: Laravel API (port 8000), React Client (port 80), React Admin (port 8080)
@@ -31,7 +32,9 @@
 - **SSH Access**: Key pair for connecting to instance
 
 ### 🔍 Verify Current Setup:
+
 Your applications should currently be accessible at:
+
 - Laravel API: `http://54.179.0.116:8000`
 - React Client: `http://54.179.0.116`
 - React Admin: `http://54.179.0.116:8080`
@@ -41,30 +44,34 @@ Your applications should currently be accessible at:
 ## 2. Connect to Your EC2 Instance
 
 ### For Windows Users (PuTTY):
+
 1. Open PuTTY
 2. Host Name: `ubuntu@54.179.0.116`
 3. Load your `.ppk` private key
 4. Click "Open" to connect
 
 ### For Mac/Linux Users:
-   ```bash
+
+```bash
 # Replace with your actual key file path
 ssh -i /path/to/your-key-pair.pem ubuntu@54.179.0.116
-   ```
+```
 
 ### Verify Connection:
-   ```bash
+
+```bash
 # Check current directory and permissions
 pwd
 whoami
 sudo systemctl status nginx mysql
-   ```
+```
 
 ---
 
 ## 3. Install PHP Requirements
 
 ### Check Current PHP Installation:
+
 ```bash
 # Check if PHP is already installed
 php -v
@@ -74,6 +81,7 @@ php -m | grep -E "(mysql|mbstring|xml|curl|zip|gd)"
 ```
 
 ### Install PHP and Required Extensions:
+
 ```bash
 # Update package lists
 sudo apt update
@@ -86,6 +94,7 @@ php -v
 ```
 
 ### Configure PHP Settings for OneStore:
+
 ```bash
 # Find your PHP version (e.g., 8.1, 8.2, 8.3)
 PHP_VERSION=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
@@ -96,6 +105,7 @@ sudo nano /etc/php/$PHP_VERSION/fpm/php.ini
 ```
 
 **Update these settings for OneStore file uploads:**
+
 ```ini
 ; Find and update these lines:
 upload_max_filesize = 10M
@@ -111,6 +121,7 @@ error_log = /var/log/php_errors.log
 ```
 
 ### Restart PHP-FPM:
+
 ```bash
 # Restart PHP-FPM service
 sudo systemctl restart php$PHP_VERSION-fpm
@@ -122,6 +133,7 @@ sudo systemctl status php$PHP_VERSION-fpm
 ## 4. Deploy OneStore Application
 
 ### Create OneStore Directory:
+
 ```bash
 # Create directory for OneStore
 sudo mkdir -p /var/www/onestore
@@ -142,6 +154,7 @@ ls -la
 ```
 
 ### Set Proper File Permissions:
+
 ```bash
 # Set ownership to web server user
 sudo chown -R www-data:www-data /var/www/onestore
@@ -167,12 +180,14 @@ ls -la /var/www/onestore/public/uploads/
 ## 5. Configure Database
 
 ### Create Dedicated Database for OneStore:
+
 ```bash
 # Connect to MySQL as root
 sudo mysql -u root -p
 ```
 
 **In MySQL console, create OneStore database:**
+
 ```sql
 -- Create database for OneStore
 CREATE DATABASE onestore_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -194,12 +209,14 @@ EXIT;
 ```
 
 ### Configure OneStore Database Connection:
+
 ```bash
 # Edit database configuration file
 sudo nano /var/www/onestore/database.php
 ```
 
 **Update with your database credentials:**
+
 ```php
 <?php
 /**
@@ -218,7 +235,7 @@ define('DB_CHARSET', 'utf8mb4');
  */
 function connectToDatabase() {
     static $pdo = null;
-    
+
     if ($pdo === null) {
         try {
             $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
@@ -228,14 +245,14 @@ function connectToDatabase() {
                 PDO::ATTR_EMULATE_PREPARES => false,
                 PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
             ];
-            
+
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
         } catch (PDOException $e) {
             error_log("Database connection failed: " . $e->getMessage());
             die("Database connection failed. Please try again later.");
         }
     }
-    
+
     return $pdo;
 }
 
@@ -250,6 +267,7 @@ try {
 ```
 
 ### Import OneStore Database Schema:
+
 ```bash
 # Import the complete database structure and sample data
 mysql -u onestore_user -p onestore_db < /var/www/onestore/complete.sql
@@ -266,18 +284,21 @@ mysql -u onestore_user -p onestore_db -e "SELECT COUNT(*) as product_count FROM 
 ## 6. Configure Nginx for Subdirectory
 
 ### Backup Current Nginx Configuration:
+
 ```bash
 # Create backup of current configuration
 sudo cp /etc/nginx/sites-available/client-frontend /etc/nginx/sites-available/client-frontend.backup
 ```
 
 ### Update Nginx Configuration for OneStore:
+
 ```bash
 # Edit your existing client-frontend configuration
 sudo nano /etc/nginx/sites-available/client-frontend
 ```
 
 **Replace the entire file with this configuration:**
+
 ```nginx
 server {
     listen 80;
@@ -299,7 +320,7 @@ server {
     location /onestore {
         alias /var/www/onestore;
         index index.php;
-        
+
         # Handle PHP files in OneStore
         location ~ \.php$ {
             # Use your actual PHP version
@@ -307,21 +328,21 @@ server {
             fastcgi_param SCRIPT_FILENAME $request_filename;
             fastcgi_param DOCUMENT_ROOT /var/www/onestore;
             include fastcgi_params;
-            
+
             # Security parameters
             fastcgi_param PHP_VALUE "upload_max_filesize=10M \n post_max_size=12M";
             fastcgi_read_timeout 300;
         }
-        
+
         # OneStore routing and clean URLs
         try_files $uri $uri/ @onestore_fallback;
     }
-    
+
     # OneStore fallback for clean URLs
     location @onestore_fallback {
         rewrite ^/onestore/(.*)$ /onestore/index.php?$query_string last;
     }
-    
+
     # OneStore static assets with caching
     location ~* ^/onestore/public/assets/(.*\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp))$ {
         alias /var/www/onestore/public/assets/$1;
@@ -329,7 +350,7 @@ server {
         add_header Cache-Control "public, immutable";
         add_header Access-Control-Allow-Origin "*";
     }
-    
+
     # OneStore uploads with proper MIME types
     location ~* ^/onestore/public/uploads/(.*\.(png|jpg|jpeg|gif|webp|svg))$ {
         alias /var/www/onestore/public/uploads/$1;
@@ -350,7 +371,7 @@ server {
         deny all;
         return 404;
     }
-    
+
     # Block access to PHP files in uploads
     location ~* ^/onestore/public/uploads/.*\.php$ {
         deny all;
@@ -364,6 +385,7 @@ server {
 ```
 
 ### Find Your PHP Version for Nginx Config:
+
 ```bash
 # Check available PHP-FPM sockets
 ls /var/run/php/
@@ -373,6 +395,7 @@ ls /var/run/php/
 ```
 
 ### Test and Apply Nginx Configuration:
+
 ```bash
 # Test Nginx configuration for syntax errors
 sudo nginx -t
@@ -389,21 +412,23 @@ sudo systemctl status nginx
 ## 7. Configure OneStore for Subdirectory
 
 ### Update Helper Class for Subdirectory Support:
+
 ```bash
 # Edit the Helper class to support subdirectory URLs
 sudo nano /var/www/onestore/app/Helpers/Helper.php
 ```
 
 **Update or create the Helper class:**
+
 ```php
 <?php
 namespace App\Helpers;
 
 class Helper {
-    
+
     // Base path for OneStore subdirectory
     const BASE_PATH = '/onestore';
-    
+
     /**
      * Generate URL for assets
      */
@@ -411,7 +436,7 @@ class Helper {
         $cleanPath = ltrim($path, '/');
         return self::BASE_PATH . '/public/assets/' . $cleanPath;
     }
-    
+
     /**
      * Generate URL for uploaded files
      */
@@ -419,11 +444,11 @@ class Helper {
         if (empty($path)) {
             return self::BASE_PATH . '/public/assets/images/no-image.png';
         }
-        
+
         $cleanPath = ltrim($path, '/');
         return self::BASE_PATH . '/public/uploads/' . $cleanPath;
     }
-    
+
     /**
      * Generate URL for OneStore routes
      */
@@ -431,7 +456,7 @@ class Helper {
         $cleanPath = ltrim($path, '/');
         return self::BASE_PATH . '/' . $cleanPath;
     }
-    
+
     /**
      * Generate admin URL
      */
@@ -439,21 +464,21 @@ class Helper {
         $cleanPath = ltrim($path, '/');
         return self::BASE_PATH . '/admin/' . $cleanPath;
     }
-    
+
     /**
      * Get current base URL
      */
     public static function baseUrl() {
         return 'http://54.179.0.116' . self::BASE_PATH;
     }
-    
+
     /**
      * Format price
      */
     public static function formatPrice($price) {
         return '$' . number_format((float)$price, 2);
     }
-    
+
     /**
      * Format date
      */
@@ -465,12 +490,14 @@ class Helper {
 ```
 
 ### Create Application Configuration:
+
 ```bash
 # Create app configuration file
 sudo nano /var/www/onestore/config/app.php
 ```
 
 **Add configuration for subdirectory hosting:**
+
 ```php
 <?php
 /**
@@ -523,19 +550,19 @@ define('STORAGE_PATH', '/var/www/onestore/storage');
 function initializeApp() {
     // Set timezone
     date_default_timezone_set(APP_TIMEZONE);
-    
+
     // Configure session
     ini_set('session.name', SESSION_NAME);
     ini_set('session.gc_maxlifetime', SESSION_LIFETIME);
     ini_set('session.cookie_lifetime', SESSION_LIFETIME);
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_strict_mode', 1);
-    
+
     // Start session if not already started
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    
+
     // Set error reporting based on environment
     if (APP_DEBUG) {
         error_reporting(E_ALL);
@@ -553,12 +580,14 @@ initializeApp();
 ```
 
 ### Update Router for Subdirectory Support:
+
 ```bash
 # Check if index.php needs updates for subdirectory routing
 sudo nano /var/www/onestore/index.php
 ```
 
 **Ensure the router handles subdirectory paths correctly.** Add this at the top after includes:
+
 ```php
 <?php
 // Include configuration
@@ -583,6 +612,7 @@ if (strpos($requestUri, $basePath) === 0) {
 ## 8. Verify Deployment
 
 ### Test Database Connection:
+
 ```bash
 # Test OneStore database connection
 mysql -u onestore_user -p onestore_db -e "SELECT COUNT(*) as total_products FROM tbl_product;"
@@ -592,6 +622,7 @@ mysql -u onestore_user -p onestore_db -e "SELECT username FROM tbl_admin LIMIT 1
 ```
 
 ### Check File Permissions:
+
 ```bash
 # Verify upload directories are writable
 ls -la /var/www/onestore/public/uploads/
@@ -604,9 +635,11 @@ sudo rm /var/www/onestore/public/uploads/test_write.txt
 ### Test Application Access:
 
 #### **OneStore Frontend:**
+
 Open browser and visit: **`http://54.179.0.116/onestore`**
 
 ✅ **Expected Results:**
+
 - OneStore homepage loads
 - Product catalog displays
 - Navigation menu works
@@ -614,15 +647,18 @@ Open browser and visit: **`http://54.179.0.116/onestore`**
 - Categories menu functions
 
 #### **OneStore Admin Panel:**
+
 Open browser and visit: **`http://54.179.0.116/onestore/admin`**
 
 ✅ **Expected Results:**
+
 - Admin login page loads
 - Can login with: **Username:** `admin`, **Password:** `admin123`
 - Dashboard shows statistics
 - All admin functions work
 
 #### **Verify Existing Applications Still Work:**
+
 - React Client: `http://54.179.0.116` ✅
 - Laravel API: `http://54.179.0.116:8000` ✅
 - React Admin: `http://54.179.0.116:8080` ✅
@@ -634,7 +670,8 @@ Open browser and visit: **`http://54.179.0.116/onestore/admin`**
 ### Common Issues and Solutions:
 
 #### **1. 404 Not Found for OneStore**
-   ```bash
+
+```bash
 # Check Nginx error logs
 sudo tail -f /var/log/nginx/onestore_error.log
 
@@ -646,9 +683,10 @@ ls -la /var/www/onestore/
 ```
 
 #### **2. 502 Bad Gateway Error**
-   ```bash
+
+```bash
 # Check PHP-FPM status
-   sudo systemctl status php8.1-fpm
+sudo systemctl status php8.1-fpm
 
 # Restart PHP-FPM
 sudo systemctl restart php8.1-fpm
@@ -658,19 +696,21 @@ sudo tail -f /var/log/php8.1-fpm.log
 ```
 
 #### **3. Database Connection Errors**
-   ```bash
+
+```bash
 # Test database connectivity
 mysql -u onestore_user -p onestore_db
 
 # Check MySQL service
-   sudo systemctl status mysql
+sudo systemctl status mysql
 
 # Verify database configuration
 sudo nano /var/www/onestore/database.php
-   ```
+```
 
 #### **4. Images Not Loading**
-   ```bash
+
+```bash
 # Check upload directory permissions
 ls -la /var/www/onestore/public/uploads/
 
@@ -682,7 +722,8 @@ sudo nginx -t
 ```
 
 #### **5. Admin Panel Not Accessible**
-   ```bash
+
+```bash
 # Check admin table
 mysql -u onestore_user -p onestore_db -e "SELECT * FROM tbl_admin;"
 
@@ -691,6 +732,7 @@ sudo nano /var/www/onestore/index.php
 ```
 
 ### **Log Monitoring:**
+
 ```bash
 # Monitor all OneStore related logs
 sudo tail -f /var/log/nginx/onestore_error.log /var/log/nginx/onestore_access.log
@@ -703,6 +745,7 @@ sudo journalctl -f -u nginx -u php8.1-fpm
 ```
 
 ### **Performance Monitoring:**
+
 ```bash
 # Check server resources
 htop
@@ -724,7 +767,8 @@ sudo mysqladmin -u root -p processlist
 ### **Regular Backups:**
 
 #### **Database Backup Script:**
-   ```bash
+
+```bash
 # Create backup directory
 sudo mkdir -p /home/ubuntu/onestore_backups
 
@@ -733,8 +777,9 @@ sudo nano /usr/local/bin/onestore_backup.sh
 ```
 
 **Add this backup script:**
-   ```bash
-   #!/bin/bash
+
+```bash
+#!/bin/bash
 # OneStore Backup Script
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_DIR="/home/ubuntu/onestore_backups"
@@ -742,8 +787,8 @@ DB_NAME="onestore_db"
 DB_USER="onestore_user"
 DB_PASS="OneStore_Secure_2024!@#"
 
-   # Create backup directory
-   mkdir -p $BACKUP_DIR
+# Create backup directory
+mkdir -p $BACKUP_DIR
 
 # Database backup
 mysqldump -u $DB_USER -p$DB_PASS $DB_NAME > $BACKUP_DIR/onestore_db_$TIMESTAMP.sql
@@ -758,7 +803,8 @@ echo "Backup completed: $TIMESTAMP"
 ```
 
 **Make executable and schedule:**
-   ```bash
+
+```bash
 # Make script executable
 sudo chmod +x /usr/local/bin/onestore_backup.sh
 
@@ -771,6 +817,7 @@ sudo crontab -e
 ### **Security Hardening:**
 
 #### **Configure Firewall:**
+
 ```bash
 # Install and configure UFW
 sudo ufw status
@@ -783,7 +830,8 @@ sudo ufw enable
 ```
 
 #### **Install Fail2Ban:**
-   ```bash
+
+```bash
 # Install fail2ban for protection against brute force
 sudo apt install -y fail2ban
 
@@ -792,6 +840,7 @@ sudo nano /etc/fail2ban/jail.local
 ```
 
 **Add this configuration:**
+
 ```ini
 [DEFAULT]
 bantime = 3600
@@ -812,6 +861,7 @@ enabled = true
 ```
 
 #### **SSL Certificate (Optional but Recommended):**
+
 ```bash
 # Install Certbot for Let's Encrypt SSL
 sudo apt install -y certbot python3-certbot-nginx
@@ -824,12 +874,14 @@ sudo apt install -y certbot python3-certbot-nginx
 ### **Monitoring & Logs:**
 
 #### **Set up Log Rotation:**
-   ```bash
+
+```bash
 # Configure log rotation for OneStore
 sudo nano /etc/logrotate.d/onestore
 ```
 
 **Add this configuration:**
+
 ```
 /var/log/nginx/onestore_*.log {
     daily
@@ -846,19 +898,21 @@ sudo nano /etc/logrotate.d/onestore
 ```
 
 #### **Monitor Disk Space:**
-   ```bash
+
+```bash
 # Create disk monitoring script
 sudo nano /usr/local/bin/disk_monitor.sh
 ```
 
 **Add monitoring script:**
+
 ```bash
 #!/bin/bash
 THRESHOLD=80
 USAGE=$(df / | awk 'END{print $(NF-1)}' | sed 's/%//')
 
 if [ $USAGE -gt $THRESHOLD ]; then
-    echo "WARNING: Disk usage is ${USAGE}% on $(hostname) at $(date)" | 
+    echo "WARNING: Disk usage is ${USAGE}% on $(hostname) at $(date)" |
     mail -s "Disk Space Alert" your-email@example.com
 fi
 ```
@@ -866,12 +920,14 @@ fi
 ### **Performance Optimization:**
 
 #### **Enable PHP OPcache:**
-   ```bash
+
+```bash
 # Edit PHP configuration
 sudo nano /etc/php/8.1/fpm/php.ini
 ```
 
 **Add/update these settings:**
+
 ```ini
 opcache.enable=1
 opcache.memory_consumption=128
@@ -882,12 +938,14 @@ opcache.fast_shutdown=1
 ```
 
 #### **MySQL Optimization:**
-   ```bash
+
+```bash
 # Edit MySQL configuration
 sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
 ```
 
 **Add under [mysqld] section:**
+
 ```ini
 # OneStore optimizations
 innodb_buffer_pool_size = 256M
@@ -899,7 +957,8 @@ thread_cache_size = 8
 ```
 
 **Restart services:**
-   ```bash
+
+```bash
 sudo systemctl restart php8.1-fpm mysql nginx
 ```
 
@@ -910,16 +969,19 @@ sudo systemctl restart php8.1-fpm mysql nginx
 ### **Your OneStore Application is Now Live:**
 
 #### **Frontend Access:**
+
 - **OneStore Shop**: `http://54.179.0.116/onestore`
 - **OneStore Admin**: `http://54.179.0.116/onestore/admin`
 - **Admin Login**: Username: `admin`, Password: `admin123`
 
 #### **Existing Applications (Unchanged):**
+
 - **React Client**: `http://54.179.0.116`
 - **Laravel API**: `http://54.179.0.116:8000`
 - **React Admin**: `http://54.179.0.116:8080`
 
 ### **Key Features Available:**
+
 ✅ Complete product catalog management  
 ✅ Category and brand management  
 ✅ Order processing system  
@@ -927,9 +989,10 @@ sudo systemctl restart php8.1-fpm mysql nginx
 ✅ File upload system for product images  
 ✅ Responsive design for mobile and desktop  
 ✅ Professional admin panel  
-✅ Sample data for testing  
+✅ Sample data for testing
 
 ### **Next Steps:**
+
 1. **Test all functionality** thoroughly
 2. **Customize branding** and content
 3. **Add real products** and images
@@ -939,6 +1002,7 @@ sudo systemctl restart php8.1-fpm mysql nginx
 7. **Monitor performance** and logs
 
 ### **Support Resources:**
+
 - **OneStore Documentation**: Available in `/memory-bank/` directory
 - **AWS EC2 Docs**: https://docs.aws.amazon.com/ec2/
 - **Nginx Docs**: https://nginx.org/en/docs/
@@ -947,15 +1011,3 @@ sudo systemctl restart php8.1-fpm mysql nginx
 **Your professional e-commerce platform is now ready to serve customers!** 🚀
 
 For any issues, check the troubleshooting section or monitor the log files mentioned in this guide.
-
-
-
-
-
-
-
-
-
-
-
-

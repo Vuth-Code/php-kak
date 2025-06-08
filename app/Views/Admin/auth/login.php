@@ -11,185 +11,157 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <?php use App\Helpers\Helper; ?>
     <link rel="icon" type="image/png" href="<?= Helper::asset('images/icons/favicon.png') ?>"/>
-    
+
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(to right top, #667eea, #764ba2);
             min-height: 100vh;
             display: flex;
             align-items: center;
+            justify-content: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
         }
-        
+
         .login-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            color: #fff;
         }
-        
+
         .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem;
             text-align: center;
+            margin-bottom: 2rem;
         }
-        
+
         .login-header h2 {
-            margin: 0;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.75rem;
         }
-        
+
         .login-header p {
-            margin: 0.5rem 0 0 0;
-            opacity: 0.9;
+            font-size: 0.95rem;
+            opacity: 0.8;
         }
-        
-        .login-body {
-            padding: 2rem;
-        }
-        
+
         .form-group {
             margin-bottom: 1.5rem;
         }
-        
+
         .form-label {
             font-weight: 600;
-            color: #333;
             margin-bottom: 0.5rem;
+            display: block;
         }
-        
-        .form-control {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        
+
         .input-group-text {
-            background: transparent;
-            border: 2px solid #e9ecef;
-            border-right: none;
-            color: #6c757d;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: none;
+            border-radius: 8px 0 0 8px;
         }
-        
-        .input-group .form-control {
-            border-left: none;
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: none;
+            border-radius: 0 8px 8px 0;
         }
-        
-        .input-group:focus-within .input-group-text {
-            border-color: #667eea;
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
         }
-        
+
+        .form-control:focus {
+            box-shadow: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.25);
+        }
+
         .btn-login {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 0.75rem 2rem;
+            color: #fff;
             font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem;
             width: 100%;
             transition: all 0.3s ease;
         }
-        
+
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
-        
+
         .alert {
-            border-radius: 8px;
-            border: none;
-        }
-        
-        .default-credentials {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
+            border-radius: 10px;
             font-size: 0.9rem;
-        }
-        
-        .default-credentials strong {
-            color: #495057;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <div class="login-container">
-                    <div class="login-header">
-                        <h2><i class="fas fa-shield-alt me-2"></i>KH-Store</h2>
-                        <p>Admin Dashboard</p>
-                    </div>
-                    
-                    <div class="login-body">
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger" role="alert">
-                                <i class="fas fa-exclamation-circle me-2"></i><?= htmlspecialchars($error) ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($success)): ?>
-                            <div class="alert alert-success" role="alert">
-                                <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($success) ?>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <form method="POST" action="<?= Helper::adminUrl('login') ?>">
-                            <div class="form-group">
-                                <label for="username" class="form-label">Username</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-user"></i>
-                                    </span>
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="username" 
-                                           name="username" 
-                                           placeholder="Enter your username"
-                                           required
-                                           autocomplete="username">
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="password" class="form-label">Password</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-lock"></i>
-                                    </span>
-                                    <input type="password" 
-                                           class="form-control" 
-                                           id="password" 
-                                           name="password" 
-                                           placeholder="Enter your password"
-                                           required
-                                           autocomplete="current-password">
-                                </div>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary btn-login">
-                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
-                            </button>
-                        </form>
-                        
-                        
-                    </div>
+    <div class="login-container">
+        <div class="login-header">
+            <h2><i class="fas fa-shield-alt me-2"></i>KH-Store</h2>
+            <p>Admin Dashboard Login</p>
+        </div>
+
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i><?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($success)): ?>
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($success) ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="<?= Helper::adminUrl('login') ?>">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" 
+                           class="form-control" 
+                           id="username" 
+                           name="username" 
+                           placeholder="Enter username" 
+                           required 
+                           autocomplete="username">
                 </div>
             </div>
-        </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" 
+                           class="form-control" 
+                           id="password" 
+                           name="password" 
+                           placeholder="Enter password" 
+                           required 
+                           autocomplete="current-password">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </button>
+        </form>
     </div>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>
